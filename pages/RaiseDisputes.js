@@ -2,9 +2,10 @@ import {ethers} from 'ethers';
 import {useState} from 'react';
 import {create as ipfsHttpClient} from 'ipfs-http-client'
 import Web3Modal from 'web3modal'
-import {nftaddress, nftmarketaddress} from '../config.js'
-import NFT from '../artifacts/contracts/NFT.sol/NFT.json'
-import NFTMarket from '../artifacts/contracts/NFTMarket.sol/NFTMarket.json'
+import {disputeNFT, disputeNFTMarket} from '../config.js'
+import DisputeNFT from '../artifacts/contracts/DisputeNFT.sol/DisputeNFT.json'
+import DisputeNFTMarket from '../artifacts/contracts/DisputeNFTMarket.sol/DisputeNFTMarket.json'
+import IERC721 from '@openzeppelin/contracts/build/contracts/IERC20.json';
 // useRouter to push to another webpage
 import {useRouter} from 'next/router'
 
@@ -13,7 +14,7 @@ const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0')
 
 export default function MintItem() {
     const [fileUrl, setFileUrl] = useState(null)
-    const [formInput, updateFormInput] = useState({price:'',name:'', description:''})
+    const [formInput, updateFormInput] = useState({price:'',title:'', description:'', address:'', tokenId:'', seller:''})
     const router = useRouter()
 
     // grab image data from ipfs 
@@ -36,55 +37,49 @@ export default function MintItem() {
     
     // function to list an item that has been minted
     async function createMarket() {
-        const {name, description, price} = formInput
-        if(!name || !description || !price || !fileUrl) return
+        const {title, description, price, address, tokenId, seller} = formInput
+        if(!title || !description || !price || !address || !tokenId || !seller) return
         
         const data = JSON.stringify({
-            name, description, image: fileUrl
+            title, description, price, address, tokenId, seller
         })
         
         try {
             // upload metadata to infura-ipfs
             const added = await client.add(data)
             const url = `https://ipfs.infura.io/ipfs/${added.path}`
-            createSale(url)
+            createDisputes(url, formInput.address, formInput.price, formInput.seller)
         } catch (err) {
                 console.log('Error uploading file', err)
         }
     }
 
     //create the item through the form, mint token and list it on the marketplace
-    async function createSale(url) {
+    async function createDisputes(url, NFTaddress, price, seller) {
         const web3Modal = new Web3Modal()
         const connection = await web3Modal.connect();
         const provider = new ethers.providers.Web3Provider(connection)
-        // get Chain Id
-        const chainId = await provider.getNetwork().then(network => network.chainId);
-        if( chainId !== 4) {
-            window.alert("Please connect to the Rinkeby network");
-            return;
-        }
+
         const signer = provider.getSigner()
         
         // create a contract instance and call methods
-        let contract = new ethers.Contract(nftaddress, NFT.abi, signer)
+        let NFTcontract = new ethers.Contract(disputeNFT, DisputeNFT.abi, signer)
         // call mintToken function
-        let transaction = await contract.mintToken(url)
+        let transaction = await NFTcontract.mintToken(url)
         // resolves to transactionReceipt
         let tx = await transaction.wait()
         console.log(tx)
         // based on transactionReceipt, extract tokenId
         let tokenId = tx.events[0].args[2].toNumber()
         console.log(tokenId)
-        const price = ethers.utils.parseUnits(formInput.price, 'ether')
+        const NFTprice = ethers.utils.parseUnits(price, 'ether')
 
         //list the item for sale on the marketplace
-        contract = new ethers.Contract(nftmarketaddress, NFTMarket.abi, signer);
-        let listingFee = await contract.getListingFee();
-        listingFee = listingFee.toString();
-
-        // list item
-        transaction = await contract.listMarketItem(nftaddress, tokenId, price, {value: listingFee})
+        let contract = new ethers.Contract(disputeNFTMarket, DisputeNFTMarket.abi, signer);
+        let arbFee = await contract.ARBITRATION_FEE();
+        console.log(arbFee);
+        arbFee = arbFee.toString();
+        transaction = await contract.listDispute(disputeNFT, NFTaddress, tokenId, seller, NFTprice, {value: arbFee})
         await transaction.wait()
         router.push('./')
     }
@@ -92,33 +87,43 @@ export default function MintItem() {
     return (
         <div className='flex justify-center'>
             <div className='w-1/2 flex flex-col pb-12'>
+                <br />
+                <div>
+                    <p>Please be aware that each dispute raised will cost 0.01 native token of the blockchain</p>
+                </div>
                 <input
-                placeholder = 'Asset Name'
+                placeholder = 'Subject Title'
                 className='mt-8 border rounded p-4'
-                onChange={e => updateFormInput({...formInput, name: e.target.value})}
+                onChange={e => updateFormInput({...formInput, title: e.target.value})}
                 />
                 <textarea
-                placeholder = 'Asset Description'
+                placeholder = 'Description of dispute'
                 className='mt-2 border rounded p-4'
                 onChange={e => updateFormInput({...formInput, description: e.target.value})}
                 />
                 <input
-                placeholder = 'Asset Price in Eth'
+                placeholder = 'Purchased NFT Address'
+                className='mt-2 border rounded p-4'
+                onChange={e => updateFormInput({...formInput, address: e.target.value})}
+                />
+                <input
+                placeholder = 'NFT TokenId'
+                className='mt-2 border rounded p-4'
+                onChange={e => updateFormInput({...formInput, tokenId: e.target.value})}
+                />
+                <input
+                placeholder = 'NFT Seller'
+                className='mt-2 border rounded p-4'
+                onChange={e => updateFormInput({...formInput, seller: e.target.value})}
+                />
+                <input
+                placeholder = 'Purchased NFT Price (in native token)'
                 className='mt-2 border rounded p-4'
                 onChange={e => updateFormInput({...formInput, price: e.target.value})}
                 />
-                <input
-                type = 'file'
-                name='Asset'
-                className = 'mt-2 border rounded p-2'
-                onChange={onChange}
-                /> {
-                fileUrl && (
-                    <img className='rounded mt-4' width='350px' src={fileUrl} />
-                )}
                 <button onClick={() => createMarket()}
                 className='font-bold mt-4 bg-purple-500 text-white rounded p-4 shadow-lg'>
-                    Mint NFT
+                    Raise Dispute
                 </button>
             </div>
 

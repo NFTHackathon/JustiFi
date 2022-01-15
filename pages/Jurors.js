@@ -18,6 +18,7 @@ export default function Home(props) {
     const authAndEnable = async () => {
       try {
         await enableWeb3();
+        await loadNFTdata();
       } catch (e) {
         console.log(e);
       }
@@ -25,7 +26,7 @@ export default function Home(props) {
 
     if (isAuthenticated) {
       authAndEnable();
-      loadNFTdata()
+      
     }
   },[]);
 
