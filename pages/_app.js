@@ -24,11 +24,6 @@ function DisputeNFTMarket({Component, pageProps}) {
               Raise Disputes
             </a>
           </Link>
-          <Link href='/MyDisputes'>
-            <a className='mr-6'>
-              My Disputes
-            </a>
-          </Link>
           <Link href='/ResolvedDisputes'>
             <a className='mr-6'>
               Resolved Disputes
