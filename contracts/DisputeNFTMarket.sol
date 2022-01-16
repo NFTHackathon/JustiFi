@@ -390,5 +390,22 @@ contract DisputeNFTMarket is ReentrancyGuard {
         }
 
     }
+
+    function removeJuror(address _juror) external onlyOwner {
+        uint256 deletedIndex;
+        for (uint256 i=0; i<=2; i++) {
+            if(jurors[i]==_juror) {
+                deletedIndex= i;
+            }
+        }
+        for (uint256 j = deletedIndex; j<=1; j++) {
+            jurors[j]= jurors[j+1];
+        }
+        jurors.pop();
+    } 
+
+    function getJurors() external view returns (address[] memory) {
+        return jurors;
+    }
     
 }
