@@ -6,27 +6,27 @@ import {disputeNFT, disputeNFTMarket} from '../config.js'
 import DisputeNFT from '../artifacts/contracts/DisputeNFT.sol/DisputeNFT.json'
 import DisputeNFTMarket from '../artifacts/contracts/DisputeNFTMarket.sol/DisputeNFTMarket.json'
 import {useMoralis} from 'react-moralis';
-import {useRouter} from 'next/router'
 
-export default function Home(props) {
+
+export default function Home() {
   const [nft, setNFT]= useState([])
   const [loadingState, setLoadingState] = useState('not-loaded')
   const { authenticate, enableWeb3, isAuthenticated, logout, user, account } = useMoralis();
-  const router = useRouter();
 
-  useEffect(() => {
+  useEffect(async () => {
     const authAndEnable = async () => {
       try {
         await enableWeb3();
       } catch (e) {
         console.log(e);
       }
+      
     };
 
     if (isAuthenticated) {
       authAndEnable();
-      loadNFTdata()
     }
+    await loadNFTdata()
   },[]);
 
   //function to display minted but unsold NFTs
@@ -41,6 +41,7 @@ export default function Home(props) {
     const items = await Promise.all(data.map(async i => {
       // tokenUri is a json format containing metadata - image, description, characteristics
       const tokenUri = await tokenContract.tokenURI(i.tokenId)
+      console.log(tokenUri)
       let item;
       try{
         const meta = await axios.get(tokenUri)
@@ -53,7 +54,7 @@ export default function Home(props) {
           purchasedNFT: i.purchasedNFT,
           status: i.status,
           ruling: i.ruling,
-          image: meta.data.image,
+          image: "",
           title: meta.data.title,
           description: meta.data.description
           }
@@ -70,7 +71,7 @@ export default function Home(props) {
 
   if(loadingState === 'loaded' && !nft.length) {
     return (
-    <h1 className='px-20 py-7 text-4x1'>No NFTs in the Marketplace</h1>)
+    <h1 className='px-20 py-7 text-4x1'>No Pending Disputes</h1>)
     }
 
   return (
@@ -78,7 +79,7 @@ export default function Home(props) {
     <div>
       <nav>
       <button onClick={isAuthenticated ? logout : authenticate}
-      className='font-bold bg-purple-500 text-white rounded p-2 shadow-lg absolute top-4 right-2'>
+        className='font-bold bg-purple-500 text-white rounded p-2 shadow-lg absolute top-4 right-2'>
         {isAuthenticated ? "Disconnect" : "Connect Wallet"}
       </button>
       </nav>
@@ -97,7 +98,13 @@ export default function Home(props) {
                   <p>{"Description: " + nft.description}</p>
                 </div>
                 <div style={{height:'72px', overflow: 'auto'}}>
-                  <p>{"Price: " + nft.price + " native token"}</p>
+                  <p>{"Price: " + (parseFloat(nft.price)/1e18).toFixed(5) + " MATIC"}</p>
+                </div>
+                <div style={{height:'72px', overflow: 'auto'}}>
+                  <p>{"Token Id: " + nft.tokenId}</p>
+                </div>
+                <div style={{height:'72px', overflow: 'auto'}}>
+                  <p>{"Token Address: " + nft.purchasedNFT}</p>
                 </div>
                 <div style={{height:'72px', overflow: 'hidden'}}>
                   <p>{"Seller: " + nft.seller}</p>
@@ -106,10 +113,10 @@ export default function Home(props) {
                   <p>{"Buyer: " + nft.buyer}</p>
                 </div>
                 <div style={{height:'72px', overflow: 'auto'}}>
-                  <p>{"Dispute Status: " + nft.status}</p>
+                  <p>{"Dispute Status: " + (nft.status == 0 ? "Pending": "") }</p>
                 </div>
                 <div style={{height:'72px', overflow: 'auto'}}>
-                  <p>{"Dispute Ruling: " + nft.ruling}</p>
+                  <p>{"Dispute Ruling: " + (nft.ruling == 0? "Pending": "")}</p>
                 </div>
               </div>
     

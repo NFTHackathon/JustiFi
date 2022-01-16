@@ -72,14 +72,14 @@ export default function MintItem() {
         // based on transactionReceipt, extract tokenId
         let tokenId = tx.events[0].args[2].toNumber()
         console.log(tokenId)
-        const NFTprice = ethers.utils.parseUnits(price, 'ether')
+        const NFTprice = ethers.utils.parseUnits(formInput.price, 'ether')
 
         //list the item for sale on the marketplace
         let contract = new ethers.Contract(disputeNFTMarket, DisputeNFTMarket.abi, signer);
         let arbFee = await contract.ARBITRATION_FEE();
         console.log(arbFee);
         arbFee = arbFee.toString();
-        transaction = await contract.listDispute(disputeNFT, NFTaddress, tokenId, seller, NFTprice, {value: arbFee})
+        transaction = await contract.listDispute(disputeNFT, NFTaddress, tokenId, seller, NFTprice.toString(), {value: arbFee})
         await transaction.wait()
         router.push('./')
     }
@@ -88,9 +88,7 @@ export default function MintItem() {
         <div className='flex justify-center'>
             <div className='w-1/2 flex flex-col pb-12'>
                 <br />
-                <div>
-                    <p>Please be aware that each dispute raised will cost 0.01 native token of the blockchain</p>
-                </div>
+                
                 <input
                 placeholder = 'Subject Title'
                 className='mt-8 border rounded p-4'
@@ -117,7 +115,7 @@ export default function MintItem() {
                 onChange={e => updateFormInput({...formInput, seller: e.target.value})}
                 />
                 <input
-                placeholder = 'Purchased NFT Price (in native token)'
+                placeholder = 'Purchased NFT Price (in MATIC)'
                 className='mt-2 border rounded p-4'
                 onChange={e => updateFormInput({...formInput, price: e.target.value})}
                 />
@@ -125,6 +123,9 @@ export default function MintItem() {
                 className='font-bold mt-4 bg-purple-500 text-white rounded p-4 shadow-lg'>
                     Raise Dispute
                 </button>
+                <div>
+                    <p>Each dispute raised will cost 0.01 MATIC</p>
+                </div>
             </div>
 
         </div>

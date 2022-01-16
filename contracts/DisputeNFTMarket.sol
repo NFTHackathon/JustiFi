@@ -242,6 +242,38 @@ contract DisputeNFTMarket is ReentrancyGuard {
         return items;
     }
 
+    // 0 represent buyer; 1 represent seller
+    function fetchResolvedNFTRefund(uint256 buyerOrSeller) public view returns (DisputeToken[] memory) {
+        uint256 totalItemCount = _tokenIds.current();
+        //a second counter for items sold
+        uint256 ownedItemCount; // default 0
+        uint256 currentIndex; // default 0
+        // Loop through the MarketTokens and identify the number of NFTs owned by the tokenholder (ownedItemCount)
+        for(uint256 i = 0; i< totalItemCount; i++) {
+            if(buyerOrSeller==0) {
+                if(idToDisputeToken[i+1].buyer == msg.sender && idToDisputeToken[i+1].ruling == Ruling.BuyerWins) {
+                    ownedItemCount +=1;
+                }
+            } else if (buyerOrSeller ==1) {
+                if(idToDisputeToken[i+1].seller == msg.sender && idToDisputeToken[i+1].ruling == Ruling.SellerWins) {
+                    ownedItemCount +=1;
+                }
+            }
+        }
+        // use ownedItemCount to initialize an array of purchased items
+        DisputeToken[] memory items = new DisputeToken[](ownedItemCount);
+        for (uint256 i =0; i < ownedItemCount; i++) {
+            if(idToDisputeToken[i+1].buyer == msg.sender) {
+                uint256 currentId = idToDisputeToken[i+1].itemId;
+                DisputeToken storage currentItem = idToDisputeToken[currentId];
+                // store the purchased items in items array
+                items[currentIndex] = currentItem;
+                currentIndex += 1;
+            }
+        }
+        return items;
+    }
+
     /**
      * @notice function to fetch all NFTs listed (both sold and unsold) by a tokenholder
      * @return MarketToken - array of listed items

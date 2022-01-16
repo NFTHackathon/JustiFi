@@ -49,7 +49,7 @@ contract Escrow {
     // buyer can choose to buyWithSafeArb
     // money will go into Escrow
     // seller, tokenId, purchased nftAddress and nftPrice will get from marketplace
-    function buyWithSafeArb (address _seller, address _purchasedNFT, uint256 _tokenId, uint256 _nftPrice) payable public {
+    function buyWithJustiFi (address _seller, address _purchasedNFT, uint256 _tokenId, uint256 _nftPrice) payable public {
         require(msg.value >= _nftPrice, "INSUFFICIENT_BALANCE");
         nftToPurchase[_purchasedNFT][_tokenId] = Purchase(
             msg.sender,
