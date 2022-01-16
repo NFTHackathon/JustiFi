@@ -64,7 +64,8 @@ export default function ClaimFundBuyer() {
           item = ''
           console.log('IPFS request failed', err)
         }
-      }))
+    }))
+    
     console.log(items)
     setNFT(items)
     setLoadingState('loaded')
@@ -93,8 +94,8 @@ export default function ClaimFundBuyer() {
     <h1 className='px-20 py-7 text-4x1'>Nothing to Claim</h1>)
   }
 
-  return (
-    <div>
+return (
+   <div>
     <div>
       <nav>
       <button onClick={isAuthenticated ? logout : authenticate}
@@ -104,7 +105,7 @@ export default function ClaimFundBuyer() {
       </nav>
     </div>
     <div className='flex justify-center'>
-       <div className='px-4' style={{maxWidth: '160px'}}>
+       <div className='px-4' style={{maxWidth: '160px'}}></div>
        <div className= 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4'>
          {
            nft.map((nft,i) => (
@@ -117,10 +118,13 @@ export default function ClaimFundBuyer() {
                   <p>{"Description: " + nft.description}</p>
                 </div>
                 <div style={{height:'72px', overflow: 'auto'}}>
-                  <p>{"Price: " + nft.price + " MATIC"}</p>
+                  <p>{"Price: " + (parseFloat(nft.price)/1e18).toFixed(5) + " MATIC"}</p>
                 </div>
                 <div style={{height:'72px', overflow: 'auto'}}>
                   <p>{"Token Id: " + nft.tokenId}</p>
+                </div>
+                <div style={{height:'72px', overflow: 'auto'}}>
+                  <p>{"Token Address: " + nft.purchasedNFT}</p>
                 </div>
                 <div style={{height:'72px', overflow: 'hidden'}}>
                   <p>{"Seller: " + nft.seller}</p>
@@ -129,7 +133,7 @@ export default function ClaimFundBuyer() {
                   <p>{"Buyer: " + nft.buyer}</p>
                 </div>
                 <div style={{height:'72px', overflow: 'auto'}}>
-                  <p>{"Dispute Status: " + (nft.status == 0 ? "Pending": "") }</p>
+                  <p>{"Dispute Status: " + (nft.status == 1 ? "Resolved": "") }</p>
                 </div>
                 <div style={{height:'72px', overflow: 'auto'}}>
                   <p>{"Dispute Ruling: " + (nft.ruling == 1 ? "Buyer Wins" : "Seller Wins")}</p>
@@ -140,13 +144,17 @@ export default function ClaimFundBuyer() {
                       > 
                       {nft.ruling==1? ("Claim Refund for Buyer") : ("Claim Fund for Seller")}
                     </button>
-                </div>
+                  </div>
               </div>
+    
             </div>
            ))
-          }
-          </div>
+         }
        </div>
+    </div>
     </div>
   )
 }
+
+
+                           
